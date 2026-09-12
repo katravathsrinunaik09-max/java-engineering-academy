@@ -1,17 +1,18 @@
 package com.javaacademy.api.user;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -19,17 +20,22 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    private UserService userService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-    @BeforeEach
-    void setUp() {
-        userService = new UserService(userRepository);
-    }
+    @InjectMocks
+    private UserService userService;
 
     @Test
     void shouldCreateUserWhenUsernameAndEmailAreAvailable() {
-        when(userRepository.findByUsername("srinu")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("srinu@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("srinu"))
+                .thenReturn(Optional.empty());
+
+        when(userRepository.findByEmail("srinu@example.com"))
+                .thenReturn(Optional.empty());
+
+        when(passwordEncoder.encode("plain-password"))
+                .thenReturn("hashed-password");
 
         User savedUser = new User(
                 "srinu",
@@ -38,18 +44,23 @@ class UserServiceTest {
                 "Srinu"
         );
 
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.save(any(User.class)))
+                .thenReturn(savedUser);
 
         User result = userService.createUser(
                 "srinu",
                 "srinu@example.com",
-                "hashed-password",
+                "plain-password",
                 "Srinu"
         );
 
         assertEquals("srinu", result.getUsername());
         assertEquals("srinu@example.com", result.getEmail());
         assertEquals("Srinu", result.getDisplayName());
+        assertEquals("hashed-password", result.getPasswordHash());
+
+        verify(passwordEncoder).encode("plain-password");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -69,12 +80,15 @@ class UserServiceTest {
                 () -> userService.createUser(
                         "srinu",
                         "new@example.com",
-                        "hashed-password",
+                        "plain-password",
                         "Srinu"
                 )
         );
 
         assertEquals("Username already exists", exception.getMessage());
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -86,7 +100,9 @@ class UserServiceTest {
                 "Existing User"
         );
 
-        when(userRepository.findByUsername("srinu")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("srinu"))
+                .thenReturn(Optional.empty());
+
         when(userRepository.findByEmail("srinu@example.com"))
                 .thenReturn(Optional.of(existingUser));
 
@@ -95,11 +111,14 @@ class UserServiceTest {
                 () -> userService.createUser(
                         "srinu",
                         "srinu@example.com",
-                        "hashed-password",
+                        "plain-password",
                         "Srinu"
                 )
         );
 
         assertEquals("Email already exists", exception.getMessage());
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).save(any(User.class));
     }
 }
