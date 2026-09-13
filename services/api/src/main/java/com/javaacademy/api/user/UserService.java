@@ -44,4 +44,10 @@ public class UserService {
 
         return userRepository.save(user);
     }
+
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found: " + username));
+    }
 }
