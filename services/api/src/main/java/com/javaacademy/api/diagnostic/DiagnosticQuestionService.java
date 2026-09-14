@@ -24,11 +24,24 @@ public class DiagnosticQuestionService {
     public DiagnosticQuestion getQuestionById(Long id) {
         return diagnosticQuestionRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Diagnostic question not found: " + id)
+                        new IllegalArgumentException(
+                                "Diagnostic question not found: " + id
+                        )
                 );
     }
 
-    public List<DiagnosticQuestion> getQuestionsByDifficulty(String difficulty) {
+    public List<DiagnosticQuestion> getQuestionsByDifficulty(
+            String difficulty
+    ) {
         return diagnosticQuestionRepository.findByDifficulty(difficulty);
+    }
+
+    public List<DiagnosticQuestionResponse> getQuestionsBySkillId(
+            Long skillId
+    ) {
+        return diagnosticQuestionRepository.findBySkillId(skillId)
+                .stream()
+                .map(DiagnosticQuestionResponse::from)
+                .toList();
     }
 }

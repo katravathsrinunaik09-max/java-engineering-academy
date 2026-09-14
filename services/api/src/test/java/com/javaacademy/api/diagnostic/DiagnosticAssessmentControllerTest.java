@@ -144,6 +144,9 @@ class DiagnosticAssessmentControllerTest {
         DiagnosticResponseService responseService =
                 mock(DiagnosticResponseService.class);
 
+        DiagnosticQuestionService questionService =
+                mock(DiagnosticQuestionService.class);
+
         UserService userService =
                 mock(UserService.class);
 
@@ -206,6 +209,7 @@ class DiagnosticAssessmentControllerTest {
                 new DiagnosticAssessmentController(
                         assessmentService,
                         responseService,
+                        questionService,
                         userService
                 );
 

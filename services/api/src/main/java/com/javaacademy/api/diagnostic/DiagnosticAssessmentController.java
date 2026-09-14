@@ -13,21 +13,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class DiagnosticAssessmentController {
 
     private final DiagnosticAssessmentService diagnosticAssessmentService;
     private final DiagnosticResponseService diagnosticResponseService;
+    private final DiagnosticQuestionService diagnosticQuestionService;
     private final UserService userService;
 
     @Autowired
     public DiagnosticAssessmentController(
             DiagnosticAssessmentService diagnosticAssessmentService,
             DiagnosticResponseService diagnosticResponseService,
+            DiagnosticQuestionService diagnosticQuestionService,
             UserService userService
     ) {
         this.diagnosticAssessmentService = diagnosticAssessmentService;
         this.diagnosticResponseService = diagnosticResponseService;
+        this.diagnosticQuestionService = diagnosticQuestionService;
         this.userService = userService;
     }
 
@@ -37,6 +42,7 @@ public class DiagnosticAssessmentController {
     ) {
         this(
                 diagnosticAssessmentService,
+                null,
                 null,
                 userService
         );
@@ -80,6 +86,13 @@ public class DiagnosticAssessmentController {
                         user
                 )
         );
+    }
+
+    @GetMapping("/api/diagnostic/questions/skill/{skillId}")
+    public List<DiagnosticQuestionResponse> getQuestionsBySkillId(
+            @PathVariable Long skillId
+    ) {
+        return diagnosticQuestionService.getQuestionsBySkillId(skillId);
     }
 
     @GetMapping("/api/diagnostic/ping")
