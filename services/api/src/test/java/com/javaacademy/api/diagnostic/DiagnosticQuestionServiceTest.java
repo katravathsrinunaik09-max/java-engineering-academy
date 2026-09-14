@@ -120,15 +120,18 @@ class DiagnosticQuestionServiceTest {
 
         assertEquals(10L, response.id());
         assertEquals(3L, response.skillId());
+
         assertEquals(
                 "What is encapsulation?",
                 response.questionText()
         );
+
         assertEquals("MCQ", response.questionType());
         assertEquals("BEGINNER", response.difficulty());
+
         assertEquals(
-                "[\"A\", \"B\", \"C\"]",
-                response.optionsJson()
+                "[\"A\",\"B\",\"C\"]",
+                response.options().toString()
         );
     }
 }
