@@ -39,6 +39,16 @@ public class DiagnosticResponseService {
             );
         }
 
+        responseRepository.findByAssessmentIdAndQuestionId(
+                        assessmentId,
+                        questionId
+                )
+                .ifPresent(existingResponse -> {
+                    throw new IllegalArgumentException(
+                            "You have already answered this question in this assessment"
+                    );
+                });
+
         DiagnosticQuestion question =
                 questionRepository.findById(questionId)
                         .orElseThrow(() ->

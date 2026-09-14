@@ -4,12 +4,17 @@ import com.javaacademy.api.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.OffsetDateTime;
 import java.util.Optional;
+
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import static org.mockito.ArgumentMatchers.anyLong;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -57,6 +62,54 @@ class DiagnosticResponseServiceTest {
         when(question.getCorrectAnswer())
                 .thenReturn("B");
     }
+    @Test
+void submitAnswerThrowsWhenQuestionWasAlreadyAnswered() {
+    Long assessmentId = 1L;
+    Long questionId = 10L;
+    User user = mock(User.class);
+
+    when(user.getId()).thenReturn(5L);
+
+    DiagnosticAssessment assessment =
+            new DiagnosticAssessment(
+                    user,
+                    "IN_PROGRESS",
+                    OffsetDateTime.now()
+            );
+
+    DiagnosticQuestion question =
+            mock(DiagnosticQuestion.class);
+
+    DiagnosticResponse existingResponse =
+            mock(DiagnosticResponse.class);
+
+    when(assessmentService.getAssessmentById(assessmentId))
+            .thenReturn(assessment);
+
+    when(responseRepository.findByAssessmentIdAndQuestionId(
+            assessmentId,
+            questionId
+    )).thenReturn(Optional.of(existingResponse));
+
+    IllegalArgumentException exception =
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> responseService.submitAnswer(
+                            assessmentId,
+                            questionId,
+                            "B",
+                            user
+                    )
+            );
+
+    assertEquals(
+            "You have already answered this question in this assessment",
+            exception.getMessage()
+    );
+
+    verify(questionRepository, never()).findById(questionId);
+    verify(responseRepository, never()).save(any());
+}
 
     @Test
     void submitAnswerMarksCorrectAnswer() {
