@@ -2,11 +2,13 @@ package com.javaacademy.api.diagnostic;
 
 import com.javaacademy.api.user.User;
 import com.javaacademy.api.user.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,14 +16,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class DiagnosticAssessmentController {
 
     private final DiagnosticAssessmentService diagnosticAssessmentService;
+    private final DiagnosticResponseService diagnosticResponseService;
     private final UserService userService;
+
+    @Autowired
+    public DiagnosticAssessmentController(
+            DiagnosticAssessmentService diagnosticAssessmentService,
+            DiagnosticResponseService diagnosticResponseService,
+            UserService userService
+    ) {
+        this.diagnosticAssessmentService = diagnosticAssessmentService;
+        this.diagnosticResponseService = diagnosticResponseService;
+        this.userService = userService;
+    }
 
     public DiagnosticAssessmentController(
             DiagnosticAssessmentService diagnosticAssessmentService,
             UserService userService
     ) {
-        this.diagnosticAssessmentService = diagnosticAssessmentService;
-        this.userService = userService;
+        this(
+                diagnosticAssessmentService,
+                null,
+                userService
+        );
     }
 
     @PostMapping("/api/diagnostic/assessments")
@@ -42,6 +59,19 @@ public class DiagnosticAssessmentController {
     ) {
         return DiagnosticAssessmentResponse.from(
                 diagnosticAssessmentService.getAssessmentById(id)
+        );
+    }
+
+    @PostMapping("/api/diagnostic/assessments/{assessmentId}/responses")
+    @ResponseStatus(HttpStatus.CREATED)
+    public DiagnosticResponse submitAnswer(
+            @PathVariable Long assessmentId,
+            @RequestBody DiagnosticAnswerRequest request
+    ) {
+        return diagnosticResponseService.submitAnswer(
+                assessmentId,
+                request.questionId(),
+                request.answer()
         );
     }
 

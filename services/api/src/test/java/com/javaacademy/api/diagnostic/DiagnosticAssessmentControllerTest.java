@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -132,5 +133,53 @@ class DiagnosticAssessmentControllerTest {
         assertEquals("IN_PROGRESS", response.status());
 
         verify(assessmentService).getAssessmentById(1L);
+    }
+
+    @Test
+    void submitAnswerPassesRequestToResponseService() {
+        DiagnosticAssessmentService assessmentService =
+                mock(DiagnosticAssessmentService.class);
+
+        DiagnosticResponseService responseService =
+                mock(DiagnosticResponseService.class);
+
+        UserService userService =
+                mock(UserService.class);
+
+        DiagnosticAnswerRequest request =
+                new DiagnosticAnswerRequest(
+                        11L,
+                        "B"
+                );
+
+        DiagnosticResponse response =
+                mock(DiagnosticResponse.class);
+
+        when(responseService.submitAnswer(
+                5L,
+                11L,
+                "B"
+        )).thenReturn(response);
+
+        DiagnosticAssessmentController controller =
+                new DiagnosticAssessmentController(
+                        assessmentService,
+                        responseService,
+                        userService
+                );
+
+        DiagnosticResponse actualResponse =
+                controller.submitAnswer(
+                        5L,
+                        request
+                );
+
+        assertEquals(response, actualResponse);
+
+        verify(responseService).submitAnswer(
+                5L,
+                11L,
+                "B"
+        );
     }
 }
