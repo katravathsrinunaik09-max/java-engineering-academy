@@ -87,6 +87,47 @@ public class DiagnosticAssessmentController {
                 )
         );
     }
+    @PostMapping("/api/diagnostic/assessments/{id}/complete")
+public DiagnosticAssessmentResponse completeAssessment(
+        @PathVariable Long id,
+        Authentication authentication
+) {
+    User user = userService.getByUsername(authentication.getName());
+
+    DiagnosticAssessment assessment =
+            diagnosticAssessmentService.getAssessmentById(id);
+
+    if (!assessment.getUser().getId().equals(user.getId())) {
+        throw new IllegalArgumentException(
+                "You are not allowed to complete this assessment"
+        );
+    }
+
+    return DiagnosticAssessmentResponse.from(
+            diagnosticAssessmentService.completeAssessment(id)
+    );
+}
+
+@PostMapping("/api/diagnostic/assessments/{id}/abandon")
+public DiagnosticAssessmentResponse abandonAssessment(
+        @PathVariable Long id,
+        Authentication authentication
+) {
+    User user = userService.getByUsername(authentication.getName());
+
+    DiagnosticAssessment assessment =
+            diagnosticAssessmentService.getAssessmentById(id);
+
+    if (!assessment.getUser().getId().equals(user.getId())) {
+        throw new IllegalArgumentException(
+                "You are not allowed to abandon this assessment"
+        );
+    }
+
+    return DiagnosticAssessmentResponse.from(
+            diagnosticAssessmentService.abandonAssessment(id)
+    );
+}
 
     @GetMapping("/api/diagnostic/questions/skill/{skillId}")
     public List<DiagnosticQuestionResponse> getQuestionsBySkillId(

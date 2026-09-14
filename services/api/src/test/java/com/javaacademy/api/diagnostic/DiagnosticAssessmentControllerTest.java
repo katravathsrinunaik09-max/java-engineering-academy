@@ -6,7 +6,6 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -35,6 +34,119 @@ class DiagnosticAssessmentControllerTest {
                 response
         );
     }
+    @Test
+void completeAssessmentUsesAuthenticatedUser() {
+    DiagnosticAssessmentService assessmentService =
+            mock(DiagnosticAssessmentService.class);
+
+    UserService userService =
+            mock(UserService.class);
+
+    Authentication authentication =
+            mock(Authentication.class);
+
+    User user =
+            mock(User.class);
+
+    DiagnosticAssessment assessment =
+            mock(DiagnosticAssessment.class);
+
+    when(authentication.getName())
+            .thenReturn("srinu");
+
+    when(userService.getByUsername("srinu"))
+            .thenReturn(user);
+
+    when(user.getId())
+            .thenReturn(7L);
+
+    when(assessment.getUser())
+            .thenReturn(user);
+
+    when(assessment.getId())
+            .thenReturn(1L);
+
+    when(assessment.getStatus())
+            .thenReturn("COMPLETED");
+
+    when(assessmentService.getAssessmentById(1L))
+            .thenReturn(assessment);
+
+    when(assessmentService.completeAssessment(1L))
+            .thenReturn(assessment);
+
+    DiagnosticAssessmentController controller =
+            new DiagnosticAssessmentController(
+                    assessmentService,
+                    userService
+            );
+
+    DiagnosticAssessmentResponse response =
+            controller.completeAssessment(1L, authentication);
+
+    assertEquals(1L, response.id());
+    assertEquals(7L, response.userId());
+    assertEquals("COMPLETED", response.status());
+
+    verify(assessmentService).completeAssessment(1L);
+}
+
+@Test
+void abandonAssessmentUsesAuthenticatedUser() {
+    DiagnosticAssessmentService assessmentService =
+            mock(DiagnosticAssessmentService.class);
+
+    UserService userService =
+            mock(UserService.class);
+
+    Authentication authentication =
+            mock(Authentication.class);
+
+    User user =
+            mock(User.class);
+
+    DiagnosticAssessment assessment =
+            mock(DiagnosticAssessment.class);
+
+    when(authentication.getName())
+            .thenReturn("srinu");
+
+    when(userService.getByUsername("srinu"))
+            .thenReturn(user);
+
+    when(user.getId())
+            .thenReturn(7L);
+
+    when(assessment.getUser())
+            .thenReturn(user);
+
+    when(assessment.getId())
+            .thenReturn(1L);
+
+    when(assessment.getStatus())
+            .thenReturn("ABANDONED");
+
+    when(assessmentService.getAssessmentById(1L))
+            .thenReturn(assessment);
+
+    when(assessmentService.abandonAssessment(1L))
+            .thenReturn(assessment);
+
+    DiagnosticAssessmentController controller =
+            new DiagnosticAssessmentController(
+                    assessmentService,
+                    userService
+            );
+
+    DiagnosticAssessmentResponse response =
+            controller.abandonAssessment(1L, authentication);
+
+    assertEquals(1L, response.id());
+    assertEquals(7L, response.userId());
+    assertEquals("ABANDONED", response.status());
+
+    verify(assessmentService).abandonAssessment(1L);
+}
 
     @Test
     void startAssessmentUsesAuthenticatedUser() {
