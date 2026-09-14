@@ -2,11 +2,12 @@ package com.javaacademy.api.diagnostic;
 
 import com.javaacademy.api.user.User;
 import com.javaacademy.api.user.UserService;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,7 +137,7 @@ class DiagnosticAssessmentControllerTest {
     }
 
     @Test
-    void submitAnswerPassesRequestToResponseService() {
+    void submitAnswerReturnsSafeResponseFromService() {
         DiagnosticAssessmentService assessmentService =
                 mock(DiagnosticAssessmentService.class);
 
@@ -155,11 +156,38 @@ class DiagnosticAssessmentControllerTest {
         DiagnosticResponse response =
                 mock(DiagnosticResponse.class);
 
+        DiagnosticAssessment assessment =
+                mock(DiagnosticAssessment.class);
+
+        DiagnosticQuestion question =
+                mock(DiagnosticQuestion.class);
+
         when(responseService.submitAnswer(
                 5L,
                 11L,
                 "B"
         )).thenReturn(response);
+
+        when(response.getId())
+                .thenReturn(20L);
+
+        when(response.getAssessment())
+                .thenReturn(assessment);
+
+        when(response.getQuestion())
+                .thenReturn(question);
+
+        when(assessment.getId())
+                .thenReturn(5L);
+
+        when(question.getId())
+                .thenReturn(11L);
+
+        when(response.getAnswer())
+                .thenReturn("B");
+
+        when(response.getCorrect())
+                .thenReturn(true);
 
         DiagnosticAssessmentController controller =
                 new DiagnosticAssessmentController(
@@ -168,18 +196,38 @@ class DiagnosticAssessmentControllerTest {
                         userService
                 );
 
-        DiagnosticResponse actualResponse =
+        DiagnosticResponseResponse actualResponse =
                 controller.submitAnswer(
                         5L,
                         request
                 );
 
-        assertEquals(response, actualResponse);
+        assertEquals(20L, actualResponse.id());
+        assertEquals(5L, actualResponse.assessmentId());
+        assertEquals(11L, actualResponse.questionId());
+        assertEquals("B", actualResponse.answer());
+        assertEquals(true, actualResponse.correct());
 
         verify(responseService).submitAnswer(
                 5L,
                 11L,
                 "B"
         );
+    }
+
+    @Test
+    void answerRequestRejectsMissingQuestionIdAndBlankAnswer() {
+        Validator validator =
+                Validation.buildDefaultValidatorFactory().getValidator();
+
+        DiagnosticAnswerRequest request =
+                new DiagnosticAnswerRequest(
+                        null,
+                        " "
+                );
+
+        var violations = validator.validate(request);
+
+        assertEquals(2, violations.size());
     }
 }

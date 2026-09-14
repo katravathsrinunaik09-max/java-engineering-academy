@@ -5,6 +5,7 @@ import com.javaacademy.api.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,14 +65,16 @@ public class DiagnosticAssessmentController {
 
     @PostMapping("/api/diagnostic/assessments/{assessmentId}/responses")
     @ResponseStatus(HttpStatus.CREATED)
-    public DiagnosticResponse submitAnswer(
+    public DiagnosticResponseResponse submitAnswer(
             @PathVariable Long assessmentId,
-            @RequestBody DiagnosticAnswerRequest request
+            @RequestBody @Validated DiagnosticAnswerRequest request
     ) {
-        return diagnosticResponseService.submitAnswer(
-                assessmentId,
-                request.questionId(),
-                request.answer()
+        return DiagnosticResponseResponse.from(
+                diagnosticResponseService.submitAnswer(
+                        assessmentId,
+                        request.questionId(),
+                        request.answer()
+                )
         );
     }
 
