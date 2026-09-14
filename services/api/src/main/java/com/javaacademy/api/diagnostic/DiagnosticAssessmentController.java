@@ -37,10 +37,12 @@ public class DiagnosticAssessmentController {
     }
 
     @GetMapping("/api/diagnostic/assessments/{id}")
-    public DiagnosticAssessment getAssessmentById(
+    public DiagnosticAssessmentResponse getAssessmentById(
             @PathVariable Long id
     ) {
-        return diagnosticAssessmentService.getAssessmentById(id);
+        return DiagnosticAssessmentResponse.from(
+                diagnosticAssessmentService.getAssessmentById(id)
+        );
     }
 
     @GetMapping("/api/diagnostic/ping")

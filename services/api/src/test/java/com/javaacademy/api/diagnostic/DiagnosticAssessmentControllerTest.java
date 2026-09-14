@@ -66,6 +66,12 @@ class DiagnosticAssessmentControllerTest {
         when(assessment.getUser())
                 .thenReturn(user);
 
+        when(user.getId())
+                .thenReturn(7L);
+
+        when(assessment.getStatus())
+                .thenReturn("IN_PROGRESS");
+
         DiagnosticAssessmentController controller =
                 new DiagnosticAssessmentController(
                         assessmentService,
@@ -76,12 +82,15 @@ class DiagnosticAssessmentControllerTest {
                 controller.startAssessment(authentication);
 
         assertEquals(1L, response.id());
+        assertEquals(7L, response.userId());
+        assertEquals("IN_PROGRESS", response.status());
+
         verify(userService).getByUsername("srinu");
         verify(assessmentService).startAssessment(user);
     }
 
     @Test
-    void getAssessmentByIdReturnsAssessmentFromService() {
+    void getAssessmentByIdReturnsSafeResponseFromService() {
         DiagnosticAssessmentService assessmentService =
                 mock(DiagnosticAssessmentService.class);
 
@@ -91,8 +100,23 @@ class DiagnosticAssessmentControllerTest {
         DiagnosticAssessment assessment =
                 mock(DiagnosticAssessment.class);
 
+        User user =
+                mock(User.class);
+
         when(assessmentService.getAssessmentById(1L))
                 .thenReturn(assessment);
+
+        when(assessment.getId())
+                .thenReturn(1L);
+
+        when(assessment.getUser())
+                .thenReturn(user);
+
+        when(user.getId())
+                .thenReturn(7L);
+
+        when(assessment.getStatus())
+                .thenReturn("IN_PROGRESS");
 
         DiagnosticAssessmentController controller =
                 new DiagnosticAssessmentController(
@@ -100,9 +124,13 @@ class DiagnosticAssessmentControllerTest {
                         userService
                 );
 
-        DiagnosticAssessment response =
+        DiagnosticAssessmentResponse response =
                 controller.getAssessmentById(1L);
 
-        assertEquals(assessment, response);
+        assertEquals(1L, response.id());
+        assertEquals(7L, response.userId());
+        assertEquals("IN_PROGRESS", response.status());
+
+        verify(assessmentService).getAssessmentById(1L);
     }
 }
