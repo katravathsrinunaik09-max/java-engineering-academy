@@ -1,7 +1,18 @@
 package com.javaacademy.api.diagnostic;
 
 import com.javaacademy.api.skill.Skill;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+
 import java.time.OffsetDateTime;
 
 @Entity
@@ -41,6 +52,25 @@ public class DiagnosticQuestion {
     private OffsetDateTime updatedAt;
 
     protected DiagnosticQuestion() {
+        // Required by JPA.
+    }
+
+    public DiagnosticQuestion(
+            Skill skill,
+            String questionText,
+            String questionType,
+            String difficulty,
+            String optionsJson,
+            String correctAnswer,
+            String explanation
+    ) {
+        this.skill = skill;
+        this.questionText = questionText;
+        this.questionType = questionType;
+        this.difficulty = difficulty;
+        this.optionsJson = optionsJson;
+        this.correctAnswer = correctAnswer;
+        this.explanation = explanation;
     }
 
     public Long getId() {
@@ -81,5 +111,17 @@ public class DiagnosticQuestion {
 
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
     }
 }
