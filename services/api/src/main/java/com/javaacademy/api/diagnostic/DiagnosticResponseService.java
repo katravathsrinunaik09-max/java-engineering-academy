@@ -39,6 +39,12 @@ public class DiagnosticResponseService {
             );
         }
 
+        if (!"IN_PROGRESS".equals(assessment.getStatus())) {
+            throw new IllegalStateException(
+                    "Answers cannot be submitted to a completed or abandoned assessment"
+            );
+        }
+
         responseRepository.findByAssessmentIdAndQuestionId(
                         assessmentId,
                         questionId

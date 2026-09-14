@@ -7,16 +7,12 @@ import org.junit.jupiter.api.Test;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 import static org.mockito.ArgumentMatchers.anyLong;
-
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +49,9 @@ class DiagnosticResponseServiceTest {
         when(assessment.getUser())
                 .thenReturn(authenticatedUser);
 
+        when(assessment.getStatus())
+                .thenReturn("IN_PROGRESS");
+
         when(assessmentService.getAssessmentById(1L))
                 .thenReturn(assessment);
 
@@ -62,54 +61,55 @@ class DiagnosticResponseServiceTest {
         when(question.getCorrectAnswer())
                 .thenReturn("B");
     }
+
     @Test
-void submitAnswerThrowsWhenQuestionWasAlreadyAnswered() {
-    Long assessmentId = 1L;
-    Long questionId = 10L;
-    User user = mock(User.class);
+    void submitAnswerThrowsWhenQuestionWasAlreadyAnswered() {
+        Long assessmentId = 1L;
+        Long questionId = 10L;
+        User user = mock(User.class);
 
-    when(user.getId()).thenReturn(5L);
+        when(user.getId()).thenReturn(5L);
 
-    DiagnosticAssessment assessment =
-            new DiagnosticAssessment(
-                    user,
-                    "IN_PROGRESS",
-                    OffsetDateTime.now()
-            );
+        DiagnosticAssessment assessment =
+                new DiagnosticAssessment(
+                        user,
+                        "IN_PROGRESS",
+                        OffsetDateTime.now()
+                );
 
-    DiagnosticQuestion question =
-            mock(DiagnosticQuestion.class);
+        DiagnosticQuestion question =
+                mock(DiagnosticQuestion.class);
 
-    DiagnosticResponse existingResponse =
-            mock(DiagnosticResponse.class);
+        DiagnosticResponse existingResponse =
+                mock(DiagnosticResponse.class);
 
-    when(assessmentService.getAssessmentById(assessmentId))
-            .thenReturn(assessment);
+        when(assessmentService.getAssessmentById(assessmentId))
+                .thenReturn(assessment);
 
-    when(responseRepository.findByAssessmentIdAndQuestionId(
-            assessmentId,
-            questionId
-    )).thenReturn(Optional.of(existingResponse));
+        when(responseRepository.findByAssessmentIdAndQuestionId(
+                assessmentId,
+                questionId
+        )).thenReturn(Optional.of(existingResponse));
 
-    IllegalArgumentException exception =
-            assertThrows(
-                    IllegalArgumentException.class,
-                    () -> responseService.submitAnswer(
-                            assessmentId,
-                            questionId,
-                            "B",
-                            user
-                    )
-            );
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () -> responseService.submitAnswer(
+                                assessmentId,
+                                questionId,
+                                "B",
+                                user
+                        )
+                );
 
-    assertEquals(
-            "You have already answered this question in this assessment",
-            exception.getMessage()
-    );
+        assertEquals(
+                "You have already answered this question in this assessment",
+                exception.getMessage()
+        );
 
-    verify(questionRepository, never()).findById(questionId);
-    verify(responseRepository, never()).save(any());
-}
+        verify(questionRepository, never()).findById(questionId);
+        verify(responseRepository, never()).save(any());
+    }
 
     @Test
     void submitAnswerMarksCorrectAnswer() {
@@ -160,6 +160,63 @@ void submitAnswerThrowsWhenQuestionWasAlreadyAnswered() {
         verify(responseRepository)
                 .save(any(DiagnosticResponse.class));
     }
+
+
+    @Test
+void submitAnswerThrowsWhenAssessmentIsCompleted() {
+    when(assessment.getStatus())
+            .thenReturn("COMPLETED");
+
+    IllegalStateException exception =
+            assertThrows(
+                    IllegalStateException.class,
+                    () -> responseService.submitAnswer(
+                            1L,
+                            10L,
+                            "B",
+                            authenticatedUser
+                    )
+            );
+
+    assertEquals(
+            "Answers cannot be submitted to a completed or abandoned assessment",
+            exception.getMessage()
+    );
+
+    verify(questionRepository, never())
+            .findById(anyLong());
+
+    verify(responseRepository, never())
+            .save(any(DiagnosticResponse.class));
+}
+
+@Test
+void submitAnswerThrowsWhenAssessmentIsAbandoned() {
+    when(assessment.getStatus())
+            .thenReturn("ABANDONED");
+
+    IllegalStateException exception =
+            assertThrows(
+                    IllegalStateException.class,
+                    () -> responseService.submitAnswer(
+                            1L,
+                            10L,
+                            "B",
+                            authenticatedUser
+                    )
+            );
+
+    assertEquals(
+            "Answers cannot be submitted to a completed or abandoned assessment",
+            exception.getMessage()
+    );
+
+    verify(questionRepository, never())
+            .findById(anyLong());
+
+    verify(responseRepository, never())
+            .save(any(DiagnosticResponse.class));
+}
 
     @Test
     void submitAnswerThrowsWhenQuestionDoesNotExist() {
