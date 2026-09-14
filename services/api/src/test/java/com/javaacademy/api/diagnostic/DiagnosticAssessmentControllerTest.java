@@ -60,16 +60,22 @@ class DiagnosticAssessmentControllerTest {
         when(assessmentService.startAssessment(user))
                 .thenReturn(assessment);
 
+        when(assessment.getId())
+                .thenReturn(1L);
+
+        when(assessment.getUser())
+                .thenReturn(user);
+
         DiagnosticAssessmentController controller =
                 new DiagnosticAssessmentController(
                         assessmentService,
                         userService
                 );
 
-        DiagnosticAssessment response =
+        DiagnosticAssessmentResponse response =
                 controller.startAssessment(authentication);
 
-        assertEquals(assessment, response);
+        assertEquals(1L, response.id());
         verify(userService).getByUsername("srinu");
         verify(assessmentService).startAssessment(user);
     }

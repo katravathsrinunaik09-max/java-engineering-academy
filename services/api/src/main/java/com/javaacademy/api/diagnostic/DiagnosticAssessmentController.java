@@ -26,12 +26,14 @@ public class DiagnosticAssessmentController {
 
     @PostMapping("/api/diagnostic/assessments")
     @ResponseStatus(HttpStatus.CREATED)
-    public DiagnosticAssessment startAssessment(
+    public DiagnosticAssessmentResponse startAssessment(
             Authentication authentication
     ) {
         User user = userService.getByUsername(authentication.getName());
 
-        return diagnosticAssessmentService.startAssessment(user);
+        return DiagnosticAssessmentResponse.from(
+                diagnosticAssessmentService.startAssessment(user)
+        );
     }
 
     @GetMapping("/api/diagnostic/assessments/{id}")
