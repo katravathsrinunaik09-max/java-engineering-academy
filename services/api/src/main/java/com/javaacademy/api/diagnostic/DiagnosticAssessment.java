@@ -60,11 +60,23 @@ public class DiagnosticAssessment {
     }
 
     public void complete(OffsetDateTime completedAt) {
+        if (!"IN_PROGRESS".equals(this.status)) {
+            throw new IllegalStateException(
+                    "Only an in-progress assessment can be completed"
+            );
+        }
+
         this.status = "COMPLETED";
         this.completedAt = completedAt;
     }
 
     public void abandon() {
+        if (!"IN_PROGRESS".equals(this.status)) {
+            throw new IllegalStateException(
+                    "Only an in-progress assessment can be abandoned"
+            );
+        }
+
         this.status = "ABANDONED";
     }
 }
