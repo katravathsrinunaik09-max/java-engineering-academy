@@ -67,13 +67,17 @@ public class DiagnosticAssessmentController {
     @ResponseStatus(HttpStatus.CREATED)
     public DiagnosticResponseResponse submitAnswer(
             @PathVariable Long assessmentId,
-            @RequestBody @Validated DiagnosticAnswerRequest request
+            @RequestBody @Validated DiagnosticAnswerRequest request,
+            Authentication authentication
     ) {
+        User user = userService.getByUsername(authentication.getName());
+
         return DiagnosticResponseResponse.from(
                 diagnosticResponseService.submitAnswer(
                         assessmentId,
                         request.questionId(),
-                        request.answer()
+                        request.answer(),
+                        user
                 )
         );
     }

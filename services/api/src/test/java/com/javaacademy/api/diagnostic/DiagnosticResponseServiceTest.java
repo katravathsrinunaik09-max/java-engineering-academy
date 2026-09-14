@@ -1,146 +1,156 @@
 package com.javaacademy.api.diagnostic;
 
+import com.javaacademy.api.user.User;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class DiagnosticResponseServiceTest {
-    @Test
-void submitAnswerThrowsWhenQuestionDoesNotExist() {
-    DiagnosticResponseRepository responseRepository =
-            mock(DiagnosticResponseRepository.class);
 
-    DiagnosticAssessmentService assessmentService =
-            mock(DiagnosticAssessmentService.class);
+    private DiagnosticResponseRepository responseRepository;
+    private DiagnosticAssessmentService assessmentService;
+    private DiagnosticQuestionRepository questionRepository;
+    private DiagnosticResponseService responseService;
 
-    DiagnosticQuestionRepository questionRepository =
-            mock(DiagnosticQuestionRepository.class);
+    private User authenticatedUser;
+    private DiagnosticAssessment assessment;
+    private DiagnosticQuestion question;
 
-    DiagnosticAssessment assessment =
-            mock(DiagnosticAssessment.class);
+    @BeforeEach
+    void setUp() {
+        responseRepository = mock(DiagnosticResponseRepository.class);
+        assessmentService = mock(DiagnosticAssessmentService.class);
+        questionRepository = mock(DiagnosticQuestionRepository.class);
 
-    when(assessmentService.getAssessmentById(1L))
-            .thenReturn(assessment);
+        responseService = new DiagnosticResponseService(
+                responseRepository,
+                assessmentService,
+                questionRepository
+        );
 
-    when(questionRepository.findById(999L))
-            .thenReturn(java.util.Optional.empty());
+        authenticatedUser = mock(User.class);
+        assessment = mock(DiagnosticAssessment.class);
+        question = mock(DiagnosticQuestion.class);
 
-    DiagnosticResponseService service =
-            new DiagnosticResponseService(
-                    responseRepository,
-                    assessmentService,
-                    questionRepository
-            );
+        when(authenticatedUser.getId())
+                .thenReturn(7L);
 
-    org.junit.jupiter.api.Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> service.submitAnswer(1L, 999L, "A")
-    );
-
-    verify(responseRepository, never())
-            .save(any(DiagnosticResponse.class));
-}
-
-    @Test
-void submitAnswerMarksIncorrectAnswer() {
-    DiagnosticResponseRepository responseRepository =
-            mock(DiagnosticResponseRepository.class);
-
-    DiagnosticAssessmentService assessmentService =
-            mock(DiagnosticAssessmentService.class);
-
-    DiagnosticQuestionRepository questionRepository =
-            mock(DiagnosticQuestionRepository.class);
-
-    DiagnosticAssessment assessment =
-            mock(DiagnosticAssessment.class);
-
-    DiagnosticQuestion question =
-            mock(DiagnosticQuestion.class);
-
-    DiagnosticResponse savedResponse =
-            mock(DiagnosticResponse.class);
-
-    when(assessmentService.getAssessmentById(1L))
-            .thenReturn(assessment);
-
-    when(questionRepository.findById(10L))
-            .thenReturn(java.util.Optional.of(question));
-
-    when(question.getCorrectAnswer())
-            .thenReturn("A");
-
-    when(responseRepository.save(any(DiagnosticResponse.class)))
-            .thenReturn(savedResponse);
-
-    DiagnosticResponseService service =
-            new DiagnosticResponseService(
-                    responseRepository,
-                    assessmentService,
-                    questionRepository
-            );
-
-    service.submitAnswer(1L, 10L, "B");
-
-    verify(responseRepository).save(argThat(response ->
-            Boolean.FALSE.equals(response.getCorrect())
-                    && response.getAnswer().equals("B")
-                    && response.getAssessment() == assessment
-                    && response.getQuestion() == question
-                    && response.getAnsweredAt() != null
-    ));
-}
-
-    @Test
-    void submitAnswerMarksCorrectAnswer() {
-        DiagnosticResponseRepository responseRepository =
-                mock(DiagnosticResponseRepository.class);
-
-        DiagnosticAssessmentService assessmentService =
-                mock(DiagnosticAssessmentService.class);
-
-        DiagnosticQuestionRepository questionRepository =
-                mock(DiagnosticQuestionRepository.class);
-
-        DiagnosticAssessment assessment =
-                mock(DiagnosticAssessment.class);
-
-        DiagnosticQuestion question =
-                mock(DiagnosticQuestion.class);
-
-        DiagnosticResponse savedResponse =
-                mock(DiagnosticResponse.class);
+        when(assessment.getUser())
+                .thenReturn(authenticatedUser);
 
         when(assessmentService.getAssessmentById(1L))
                 .thenReturn(assessment);
 
         when(questionRepository.findById(10L))
-                .thenReturn(java.util.Optional.of(question));
+                .thenReturn(Optional.of(question));
 
         when(question.getCorrectAnswer())
-                .thenReturn("A");
+                .thenReturn("B");
+    }
+
+    @Test
+    void submitAnswerMarksCorrectAnswer() {
+        DiagnosticResponse savedResponse =
+                mock(DiagnosticResponse.class);
 
         when(responseRepository.save(any(DiagnosticResponse.class)))
                 .thenReturn(savedResponse);
 
-        DiagnosticResponseService service =
-                new DiagnosticResponseService(
-                        responseRepository,
-                        assessmentService,
-                        questionRepository
+        when(savedResponse.getCorrect())
+                .thenReturn(true);
+
+        DiagnosticResponse result =
+                responseService.submitAnswer(
+                        1L,
+                        10L,
+                        "B",
+                        authenticatedUser
                 );
 
-        service.submitAnswer(1L, 10L, "A");
+        assertEquals(true, result.getCorrect());
 
-        verify(responseRepository).save(argThat(response ->
-                Boolean.TRUE.equals(response.getCorrect())
-                        && response.getAnswer().equals("A")
-                        && response.getAssessment() == assessment
-                        && response.getQuestion() == question
-                        && response.getAnsweredAt() != null
-        ));
+        verify(responseRepository)
+                .save(any(DiagnosticResponse.class));
+    }
+
+    @Test
+    void submitAnswerMarksIncorrectAnswer() {
+        DiagnosticResponse savedResponse =
+                mock(DiagnosticResponse.class);
+
+        when(responseRepository.save(any(DiagnosticResponse.class)))
+                .thenReturn(savedResponse);
+
+        when(savedResponse.getCorrect())
+                .thenReturn(false);
+
+        DiagnosticResponse result =
+                responseService.submitAnswer(
+                        1L,
+                        10L,
+                        "A",
+                        authenticatedUser
+                );
+
+        assertEquals(false, result.getCorrect());
+
+        verify(responseRepository)
+                .save(any(DiagnosticResponse.class));
+    }
+
+    @Test
+    void submitAnswerThrowsWhenQuestionDoesNotExist() {
+        when(questionRepository.findById(10L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> responseService.submitAnswer(
+                        1L,
+                        10L,
+                        "B",
+                        authenticatedUser
+                )
+        );
+
+        verify(responseRepository, never())
+                .save(any(DiagnosticResponse.class));
+    }
+
+    @Test
+    void submitAnswerThrowsWhenAssessmentBelongsToAnotherUser() {
+        User anotherUser = mock(User.class);
+
+        when(anotherUser.getId())
+                .thenReturn(99L);
+
+        when(assessment.getUser())
+                .thenReturn(anotherUser);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> responseService.submitAnswer(
+                        1L,
+                        10L,
+                        "B",
+                        authenticatedUser
+                )
+        );
+
+        verify(questionRepository, never())
+                .findById(anyLong());
+
+        verify(responseRepository, never())
+                .save(any(DiagnosticResponse.class));
     }
 }

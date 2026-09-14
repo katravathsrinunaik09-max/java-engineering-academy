@@ -1,5 +1,6 @@
 package com.javaacademy.api.diagnostic;
 
+import com.javaacademy.api.user.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +27,17 @@ public class DiagnosticResponseService {
     public DiagnosticResponse submitAnswer(
             Long assessmentId,
             Long questionId,
-            String answer
+            String answer,
+            User authenticatedUser
     ) {
         DiagnosticAssessment assessment =
                 assessmentService.getAssessmentById(assessmentId);
+
+        if (!assessment.getUser().getId().equals(authenticatedUser.getId())) {
+            throw new IllegalArgumentException(
+                    "You are not allowed to submit answers to this assessment"
+            );
+        }
 
         DiagnosticQuestion question =
                 questionRepository.findById(questionId)

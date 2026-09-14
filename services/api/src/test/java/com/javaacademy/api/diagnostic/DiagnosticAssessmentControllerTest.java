@@ -137,7 +137,7 @@ class DiagnosticAssessmentControllerTest {
     }
 
     @Test
-    void submitAnswerReturnsSafeResponseFromService() {
+    void submitAnswerUsesAuthenticatedUser() {
         DiagnosticAssessmentService assessmentService =
                 mock(DiagnosticAssessmentService.class);
 
@@ -146,6 +146,12 @@ class DiagnosticAssessmentControllerTest {
 
         UserService userService =
                 mock(UserService.class);
+
+        Authentication authentication =
+                mock(Authentication.class);
+
+        User user =
+                mock(User.class);
 
         DiagnosticAnswerRequest request =
                 new DiagnosticAnswerRequest(
@@ -162,10 +168,17 @@ class DiagnosticAssessmentControllerTest {
         DiagnosticQuestion question =
                 mock(DiagnosticQuestion.class);
 
+        when(authentication.getName())
+                .thenReturn("srinu");
+
+        when(userService.getByUsername("srinu"))
+                .thenReturn(user);
+
         when(responseService.submitAnswer(
                 5L,
                 11L,
-                "B"
+                "B",
+                user
         )).thenReturn(response);
 
         when(response.getId())
@@ -199,7 +212,8 @@ class DiagnosticAssessmentControllerTest {
         DiagnosticResponseResponse actualResponse =
                 controller.submitAnswer(
                         5L,
-                        request
+                        request,
+                        authentication
                 );
 
         assertEquals(20L, actualResponse.id());
@@ -208,10 +222,13 @@ class DiagnosticAssessmentControllerTest {
         assertEquals("B", actualResponse.answer());
         assertEquals(true, actualResponse.correct());
 
+        verify(userService).getByUsername("srinu");
+
         verify(responseService).submitAnswer(
                 5L,
                 11L,
-                "B"
+                "B",
+                user
         );
     }
 
