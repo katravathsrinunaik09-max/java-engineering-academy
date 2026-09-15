@@ -75,4 +75,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+    @ExceptionHandler(IllegalStateException.class)
+public ResponseEntity<ApiErrorResponse> handleIllegalStateException(
+        IllegalStateException exception
+) {
+    ApiErrorResponse response = new ApiErrorResponse(
+            Instant.now(),
+            HttpStatus.CONFLICT.value(),
+            "Conflict",
+            exception.getMessage(),
+            Map.of()
+    );
+
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(response);
+}
 }

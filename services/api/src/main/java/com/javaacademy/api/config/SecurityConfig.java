@@ -2,9 +2,10 @@ package com.javaacademy.api.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -34,10 +35,22 @@ public class SecurityConfig {
                 .requestCache(requestCache -> requestCache.disable())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptionHandling -> exceptionHandling
+                        .authenticationEntryPoint((request, response, exception) ->
+                                response.sendError(
+                                        HttpStatus.UNAUTHORIZED.value(),
+                                        "Authentication required"
+                                ))
+                        .accessDeniedHandler((request, response, exception) ->
+                                response.sendError(
+                                        HttpStatus.FORBIDDEN.value(),
+                                        "Access denied"
+                                )))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/diagnostic/ping").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(
